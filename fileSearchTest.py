@@ -10,6 +10,7 @@ from tkinter import *
 from tkinter import ttk
 from threading import *
 from threading import RLock
+from tkinter import filedialog
 
 def addInIndex(writer,root):
     nbIndexed=0
@@ -166,36 +167,61 @@ class GenererBD(Thread):
 def updateData():
     createSearchableData(root)
 
+def browse_button(buttonUpdate, labelPath):
+    #global folder_path
+    filename = filedialog.askdirectory()
+    #folder_path.set(filename)
+    print(filename)
+    labelPath['text'] = filename
+    root = filename
+    print(root)
+    buttonUpdate['state'] = "normal"
+
 def afficher_graphique():
     fenetre = Tk()
     fenetre.title('Search file')
-    fenetre.minsize(900, 500)
+    fenetre.minsize(900, 570)
     fenetre.resizable(0, 0)
 
-    cadre = Frame(fenetre, width=500, height=200, borderwidth=2)
-    cadre.pack(fill=BOTH)
+    recherche = Frame(fenetre, width=500, height=200, borderwidth=2)
+    recherche.pack()
 
-    champ_label = Label(cadre, text="Entre le terme a chercher:", width=30, height=3)
+    champ_label = Label(recherche, text="Entre le terme a chercher:", anchor="w", width=25, height=3)
     champ_label.grid(row=1, column=0)
     # champ_label.pack(side="top", fill=Y)
     var_text = StringVar()
-    ligne_text = Entry(cadre, textvariable=var_text, width=50)
+    ligne_text = Entry(recherche, textvariable=var_text, width=60)
     print(var_text)
     ligne_text.grid(row=1, column=1)
-    boutton_chercher = Button(cadre, text="Chercher", command=lambda: chercher(var_text, tkvar.get(), EmployView))
-    boutton_chercher.grid(row=1, column=3)
+    margeLabel=Label(recherche, width=10)
+    margeLabel.grid(row=1, column=2)
+    boutton_chercher = Button(recherche, text="Chercher", command=lambda: chercher(var_text, tkvar.get(), EmployView))
+    boutton_chercher.grid(row=1, column=4)
 
     # Create a Tkinter variable
     tkvar = StringVar()
     # Dictionary with options
     choices = {'Nom fichier', 'Type fichier', 'Contenu'}
     tkvar.set('Nom fichier')
-    popupMenu = OptionMenu(cadre, tkvar, *choices)  # set the default option
-    popupMenu.grid(row=1, column=2)
+    popupMenu = OptionMenu(recherche, tkvar, *choices)  # set the default option
+    popupMenu.grid(row=1, column=3)
 
-    button_updateDb = Button(cadre, text="Update BD", command=lambda: GenererBD(root, button_updateDb, boutton_chercher).start(), width=20)
+    indexation = Frame(fenetre, width=500, height=200, borderwidth=2)
+    indexation.pack()
 
-    button_updateDb.grid(row=1, column=4)
+    labelIndexation=Label(indexation, text="L'indexation :", anchor="w", width=25, height=3)
+    labelIndexation.grid(row=1, column=0)
+
+    labelPath=Label(indexation, text="", anchor="w", width=60, height=3)
+    labelPath.grid(row=1, column=1)
+    labelPath['text'] = root
+
+    button_updateDb = Button(indexation, text="Update BD", command=lambda: GenererBD(labelPath['text'], button_updateDb, boutton_chercher).start(), width=17)
+    button_updateDb.grid(row=1, column=5)
+    button_updateDb['state'] = "disabled"
+
+    button2 = Button(indexation, text="Browse", command=lambda: browse_button(button_updateDb, labelPath))
+    button2.grid(row=1, column=4)
 
     # link function to change dropdown
     #tkvar.trace('w', change_dropdown)
