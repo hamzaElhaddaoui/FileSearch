@@ -175,6 +175,10 @@ class GenererBD(Thread):
         createSearchableData(self.path, self.bareProgress)
         self.bottonUpdate["state"] = "normal"
         self.bottonChercher["state"] = "normal"
+        fichierPw = open("DirectoryIndexed.txt", "w")
+        fichierPw.write(self.path)
+        fichierPw.close()
+
 
 def updateData():
     createSearchableData(root)
@@ -262,7 +266,10 @@ def afficher_graphique():
 
     fenetre.mainloop()
 
-root = "F:\\Programme"
+
+fichierP = open("DirectoryIndexed.txt", "r")
+root = fichierP.read()
+fichierP.close()
 # createSearchableData(root)
 # searchData()
 if len(sys.argv) < 2 or len(sys.argv) > 5:
