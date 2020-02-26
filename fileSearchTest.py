@@ -1,20 +1,22 @@
 import os
-import sys
-from whoosh.index import create_in
-from whoosh.fields import Schema, TEXT, ID
-from whoosh.qparser import QueryParser
-from whoosh import scoring
-from whoosh.index import open_dir
-from whoosh import qparser
-from tkinter import *
-from tkinter import ttk
 from threading import *
 from threading import RLock
+from tkinter import *
 from tkinter import filedialog
+from tkinter import ttk
 
-def addInIndex(writer,root):
+from whoosh import qparser
+from whoosh import scoring
+from whoosh.fields import Schema, TEXT, ID
+from whoosh.index import create_in
+from whoosh.index import open_dir
+from whoosh.qparser import QueryParser
+
+
+def addInIndex(writer,root,progressBare):
     nbIndexed=0
     print("---------------------------------------------")
+    i=1
     for root, dirs, files in os.walk(root, topdown=True):
         for name in files:
             path = os.path.join(root, name)
@@ -32,6 +34,10 @@ def addInIndex(writer,root):
                 fp.close()
             nbIndexed += 1
             writer.add_document(title=name, path=path, content=text, tags=text, extension=extension)
+            if i <= 16000 and (i%200) == 0:
+               progressBare["value"] = i/200
+            i = i+1
+
         for name in dirs:
             print("*****************************")
             print(os.path.join(root, name))
@@ -40,7 +46,7 @@ def addInIndex(writer,root):
 
 verrou = RLock()
 
-def createSearchableData(root):
+def createSearchableData(root, progressbar):
     '''
     Schema definition: title(name of file), path(as ID), content(indexed
     but not stored),textdata (stored text content)
@@ -56,8 +62,10 @@ def createSearchableData(root):
         ix = create_in("indexdir", schema)
 
         writer = ix.writer()
-        addInIndex(writer, root)
+        addInIndex(writer, root, progressbar)
+        progressbar["value"] = 90
         writer.commit()
+        progressbar["value"] = 100
         print("commit done!")
 
 def searchDataByName(name, treeFrame):
@@ -95,7 +103,7 @@ def searchDataByType(type, treeFrame):
        results = searcher.search(query, terms=True, limit=None)
        if len(results) > 0:
            for i in range(len(results)):
-               treeFrame.insert("", "end", text="", values=(results[i]['title'],results[i]['path'],results[i]['extension'],results[i]['tags']))
+               treeFrame.insert("", "end", text="", values=(results[i]['title'], results[i]['path'],results[i]['extension'],results[i]['tags']))
                print("File Name: " + results[i]['title'], "Path: " + results[i]['path'], "Contenu: "+results[i]['tags'],
                      "Extension: " + results[i]['extension'])
            print(results)
@@ -152,15 +160,19 @@ def chercher(input,type, treeFrame):
         searchByContent(input.get(), treeFrame)
 
 class GenererBD(Thread):
-    def __init__(self, root, bottonUpdate, bottonChercher):
+    def __init__(self, root, bottonUpdate, bottonChercher, bareProgress):
         Thread.__init__(self)
         self.path = root
         self.bottonUpdate = bottonUpdate
         self.bottonChercher = bottonChercher
+        self.bareProgress = bareProgress
     def run(self):
+        self.bareProgress["value"] = 0
+        self.bareProgress["maximum"] = 100
         self.bottonUpdate["state"] = "disabled"
         self.bottonChercher["state"] = "disabled"
-        createSearchableData(self.path)
+
+        createSearchableData(self.path, self.bareProgress)
         self.bottonUpdate["state"] = "normal"
         self.bottonChercher["state"] = "normal"
 
@@ -195,7 +207,7 @@ def afficher_graphique():
     ligne_text.grid(row=1, column=1)
     margeLabel=Label(recherche, width=10)
     margeLabel.grid(row=1, column=2)
-    boutton_chercher = Button(recherche, text="Chercher", command=lambda: chercher(var_text, tkvar.get(), EmployView))
+    boutton_chercher = Button(recherche, text="Chercher", command=lambda: chercher(var_text, tkvar.get(), fileTable))
     boutton_chercher.grid(row=1, column=4)
 
     # Create a Tkinter variable
@@ -209,43 +221,45 @@ def afficher_graphique():
     indexation = Frame(fenetre, width=500, height=200, borderwidth=2)
     indexation.pack()
 
-    labelIndexation=Label(indexation, text="L'indexation :", anchor="w", width=25, height=3)
+    labelIndexation=Label(indexation, text="L'indexation :", anchor="w", width=20, height=3)
     labelIndexation.grid(row=1, column=0)
 
-    labelPath=Label(indexation, text="", anchor="w", width=60, height=3)
+    labelPath=Label(indexation, text="", anchor="w", width=35, height=3)
     labelPath.grid(row=1, column=1)
     labelPath['text'] = root
 
-    button_updateDb = Button(indexation, text="Update BD", command=lambda: GenererBD(labelPath['text'], button_updateDb, boutton_chercher).start(), width=17)
+    button_updateDb = Button(indexation, text="Update BD", command=lambda: GenererBD(labelPath['text'], button_updateDb, boutton_chercher, bareProgress).start(), width=17)
     button_updateDb.grid(row=1, column=5)
     button_updateDb['state'] = "disabled"
 
     button2 = Button(indexation, text="Browse", command=lambda: browse_button(button_updateDb, labelPath))
     button2.grid(row=1, column=4)
 
+    bareProgress = ttk.Progressbar(indexation, orient=HORIZONTAL, length=200)
+    bareProgress.grid(row=1, column=6)
+
     # link function to change dropdown
     #tkvar.trace('w', change_dropdown)
     treeviewFrame = Frame(fenetre)
     treeviewFrame.pack()
 
-    EmployView = ttk.Treeview(treeviewFrame, height=20)
-    EmployView['columns'] = ("Nom fichier", "Path", "Extension", "Contenu")
-    EmployView.grid(row=2, column=1, columnspan=5)
-    EmployView.heading("#0", text="", anchor="w")
-    EmployView.column("#0", anchor="center", width=5, stretch=NO)
-    EmployView.heading("Nom fichier", text="Nom fichier", anchor="w")
-    EmployView.column("Nom fichier", anchor="w", width=240)
-    EmployView.heading("Path", text="Path", anchor="w")
-    EmployView.column("Path", anchor="w", width=240)
-    EmployView.heading("Extension", text="Extension", anchor="w")
-    EmployView.column("Extension", anchor="w", width=90)
-    EmployView.heading("Contenu", text="Contenu", anchor="w")
-    EmployView.column("Contenu", anchor="w", width=240)
-    EmployViewScrollbar = ttk.Scrollbar(treeviewFrame, orient="vertical", command=EmployView.yview)
-    EmployView.configure(yscroll=EmployViewScrollbar.set)
+    fileTable = ttk.Treeview(treeviewFrame, height=20)
+    fileTable['columns'] = ("Nom fichier", "Path", "Extension", "Contenu")
+    fileTable.grid(row=2, column=1, columnspan=5)
+    fileTable.heading("#0", text="", anchor="w")
+    fileTable.column("#0", anchor="center", width=5, stretch=NO)
+    fileTable.heading("Nom fichier", text="Nom fichier", anchor="w")
+    fileTable.column("Nom fichier", anchor="w", width=240)
+    fileTable.heading("Path", text="Path", anchor="w")
+    fileTable.column("Path", anchor="w", width=240)
+    fileTable.heading("Extension", text="Extension", anchor="w")
+    fileTable.column("Extension", anchor="w", width=90)
+    fileTable.heading("Contenu", text="Contenu", anchor="w")
+    fileTable.column("Contenu", anchor="w", width=240)
+    EmployViewScrollbar = ttk.Scrollbar(treeviewFrame, orient="vertical", command=fileTable.yview)
+    fileTable.configure(yscroll=EmployViewScrollbar.set)
     EmployViewScrollbar.grid(row=2, column=6, sticky="ns")
 
-    EmployView.insert("", "end", text="", values=("hamza", "toto", "tantan", "rae"))
     fenetre.mainloop()
 
 root = "F:\\Programme"
