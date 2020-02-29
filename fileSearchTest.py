@@ -91,6 +91,9 @@ def searchDataByName(name, treeFrame, maxAff, itemTrouve, tempsExecution, trierP
         if (trierPar=="Type"):
             results = searcher.search(query, terms=True, limit=maxAffInt, sortedby="extension")
             print("sortedby extension")
+        elif (trierPar=="Nom"):
+            results = searcher.search(query, terms=True, limit=maxAffInt, sortedby="title")
+            print("sortedby name")
         else:
             results = searcher.search(query, terms=True, limit=maxAffInt)
             print("sortedBy score")
@@ -109,7 +112,7 @@ def searchDataByName(name, treeFrame, maxAff, itemTrouve, tempsExecution, trierP
         else:
             print("Aucun resultat trouvé !")
 
-def searchDataByType(type, treeFrame, maxAff, itemTrouve, tempsExecution):
+def searchDataByType(type, treeFrame, maxAff, itemTrouve, tempsExecution, trierPar):
     for i in treeFrame.get_children():
         treeFrame.delete(i)
 
@@ -125,7 +128,17 @@ def searchDataByType(type, treeFrame, maxAff, itemTrouve, tempsExecution):
     print('Le type a chercher ', type)
     with ix.searcher(weighting=scoring.Frequency) as searcher:
        query= QueryParser("extension", ix.schema).parse(query_str)
-       results = searcher.search(query, terms=True, limit=maxAffInt)
+
+       if (trierPar == "Type"):
+           results = searcher.search(query, terms=True, limit=maxAffInt, sortedby="extension")
+           print("sortedby extension")
+       elif (trierPar == "Nom"):
+           results = searcher.search(query, terms=True, limit=maxAffInt, sortedby="title")
+           print("sortedby name")
+       else:
+           results = searcher.search(query, terms=True, limit=maxAffInt)
+           print("sortedBy score")
+
        if(maxAffInt!=None):
            max = maxAffInt if maxAffInt < len(results) else len(results)
        else:
@@ -143,7 +156,7 @@ def searchDataByType(type, treeFrame, maxAff, itemTrouve, tempsExecution):
             print("Aucun resultat trouvé !")
 
 
-def searchByContent(content, treeFrame, maxAff, itemTrouve, tempsExecution):
+def searchByContent(content, treeFrame, maxAff, itemTrouve, tempsExecution, trierPar):
     for i in treeFrame.get_children():
         treeFrame.delete(i)
 
@@ -159,7 +172,17 @@ def searchByContent(content, treeFrame, maxAff, itemTrouve, tempsExecution):
     print('Le contenue a recherche est ', content)
     with ix.searcher(weighting=scoring.Frequency) as searcher:
         query = QueryParser("tags", ix.schema).parse(query_str)
-        results = searcher.search(query, terms=True, limit=maxAffInt)
+
+        if (trierPar=="Type"):
+            results = searcher.search(query, terms=True, limit=maxAffInt, sortedby="extension")
+            print("sortedby extension")
+        elif (trierPar=="Nom"):
+            results = searcher.search(query, terms=True, limit=maxAffInt, sortedby="title")
+            print("sortedby name")
+        else:
+            results = searcher.search(query, terms=True, limit=maxAffInt)
+            print("sortedBy score")
+
         if(maxAffInt != None):
             max = maxAffInt if maxAffInt < len(results) else len(results)
         else:
@@ -200,9 +223,9 @@ def chercher(input,type, treeFrame, maxAff, itemTrouve, tempsExecution, buttonEx
         print(input.get())
         searchDataByName(input.get(), treeFrame, maxAff, itemTrouve, tempsExecution, trierPar)
     elif type == "Type fichier":
-        searchDataByType(input.get(), treeFrame, maxAff, itemTrouve, tempsExecution)
+        searchDataByType(input.get(), treeFrame, maxAff, itemTrouve, tempsExecution, trierPar)
     elif type == "Contenu":
-        searchByContent(input.get(), treeFrame, maxAff, itemTrouve, tempsExecution)
+        searchByContent(input.get(), treeFrame, maxAff, itemTrouve, tempsExecution, trierPar)
 
 class GenererBD(Thread):
     def __init__(self, root, bottonUpdate, bottonChercher, bareProgress):
