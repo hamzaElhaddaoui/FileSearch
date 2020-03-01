@@ -136,12 +136,13 @@ def searchDataByType(type, treeFrame, maxAff, itemTrouve, tempsExecution, trierP
            results = searcher.search(query, terms=True, limit=maxAffInt, sortedby="title")
            print("sortedby name")
        else:
-           results = searcher.search(query, terms=True, limit=maxAffInt)
+           results = searcher.search(query, terms=True, limit=None)
            print("sortedBy score")
 
        if(maxAffInt!=None):
            max = maxAffInt if maxAffInt < len(results) else len(results)
        else:
+           print(results)
            max = len(results)
        if len(results) > 0:
            itemTrouve['text'] = "Item trouvé : " + str(len(results))
@@ -154,7 +155,6 @@ def searchDataByType(type, treeFrame, maxAff, itemTrouve, tempsExecution, trierP
            print(results)
        else:
             print("Aucun resultat trouvé !")
-
 
 def searchByContent(content, treeFrame, maxAff, itemTrouve, tempsExecution, trierPar):
     for i in treeFrame.get_children():
@@ -396,6 +396,7 @@ fichierP.close()
 
 # createSearchableData(root)
 # searchData()
+"""
 if len(sys.argv) < 2 or len(sys.argv) > 5:
 
     print("Please use proper format")
@@ -407,20 +408,18 @@ if len(sys.argv) < 2 or len(sys.argv) > 5:
     print(len(sys.argv))
     print(sys.argv[1])
     print(sys.argv[3])
-"""
+
 elif sys.argv[1] == '-c':
 
     createSearchableData(root, "create")
 
 elif len(sys.argv) == 3 and sys.argv[1] == '-name':
-    searchDataByName(sys.argv[2])
+    searchDataByName(sys.argv[2], None, None, None, None, None)
 
 elif len(sys.argv) == 3 and sys.argv[1] == '-type':
-    searchDataByType(sys.argv[2])
+    searchDataByType(sys.argv[2], None, None, None, None, None)
 elif len(sys.argv) == 3 and sys.argv[1] == '-content':
-    searchByContent(sys.argv[2])
-elif len(sys.argv) == 3 and sys.argv[1] == "-content":
-    searchByContent(sys.argv[2])
+    searchByContent(sys.argv[2], None, None, None, None, None)
 elif len(sys.argv) == 5 and sys.argv[1] == '-type' and sys.argv[3] == '-name':
     searchDataByNameAndType(sys.argv[4], sys.argv[2])
 elif len(sys.argv) == 5 and sys.argv[1] == '-name' and sys.argv[3] == '-type':
